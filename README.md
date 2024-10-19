@@ -1,3 +1,13 @@
+# Game Matchmaking Queue
+
+> Gas efficient smart contract SDK for Multiplayer Game Matchmaking
+
+This project aims to create an immutable smart contract that can be used by any game developer to create a matchmaking queue for a multi-player game. Developers can use player rankings and other settings to define how players should be matched for a game.
+
+This project uses Solidity smart contracts written for the EVM. The contracts can be called from game developers to enter players into a matchmaking queue. This project heavily uses Foundry's Forge tool for testing and gas estimates.
+
+> Built during ETHGlobal San Francisco 2024!
+
 ## Foundry
 
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
