@@ -12,9 +12,9 @@ This project uses Solidity smart contracts written for the EVM. The contracts ca
 Send ETH for scale! 21,000 gas for sending ETH!
 | **Number of players in the queue** | **Best case gas to enter queue** | **Bad case gas to enter queue** |
 | --- | --- | --- |
-| 1000 | 69,388 | ? |
-| 10000 | 83,132 | ? |
-| 100000 | 95,102 | ? |
+| 1,000 | 69,388 | 34,276,921 |
+| 10,000 | 83,132 | 63,788,162 |
+| 100,000 | 95,102 | 91,834,231 |
 
 ```
 forge test --gas-report --gas-limit 300000000000
