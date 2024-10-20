@@ -135,6 +135,28 @@ contract MatchmakingQueueGasScalingTest is Test {
     }
 
     // gas history:
+    // 8m 10/19: Entering a 3 person game with 1002 players in queue is gas:
+    function testEnterPlayerIntoMatchmaking_GasForEntryIntoMiddleOfRankingsAfterThousandPlayers() public {
+        // Prepare to listen for the MatchMade event
+        address[] memory expectedPlayers = new address[](3);
+        expectedPlayers[0] = address(0x0000000000000000000000000000000000000062);
+        expectedPlayers[1] = address(0x0000000000000000000000000000000000000063);
+        expectedPlayers[2] = address(0x1003);
+
+        vm.expectEmit(true, true, true, true);
+        // We emit the event we expect to see.
+        emit MatchmakingQueue.MatchMade(queueAddress1000Players, expectedPlayers);
+        // 1000: 6,482,384 gas
+        // 800: 7,732,357 gas
+        // 200: 11,550,971 gas -> worse case is lower, moving more elements in the queue
+        MatchmakingQueue.Player memory player1003 = MatchmakingQueue.Player(address(0x1003), 200);
+        matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress1000Players, player1003, 3, 5);
+
+        // Check that the queue is now 1000 after the match is made
+        assertEq(matchmakingQueue.getQueueLength(queueAddress1000Players), 1000);
+    }
+
+    // gas history:
     // 3:48pm 10/19: Entering a 3 person game with 10002 players in queue is gas: 83132
     function testEnterPlayerIntoMatchmaking_GasForEntryAfterTenThousandPlayers() public {
         // Prepare to listen for the MatchMade event
@@ -148,6 +170,26 @@ contract MatchmakingQueueGasScalingTest is Test {
         emit MatchmakingQueue.MatchMade(queueAddress10000Players, expectedPlayers);
 
         MatchmakingQueue.Player memory player10003 = MatchmakingQueue.Player(address(0x10003), 30000);
+        matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress10000Players, player10003, 3, 5);
+
+        // Check that the queue is now 10000 after the match is made
+        assertEq(matchmakingQueue.getQueueLength(queueAddress10000Players), 10000);
+    }
+
+    // gas history:
+    // 3:48pm 10/19: Entering a 3 person game with 10002 players into the middle of the queue is gas: 63,785,562
+    function testEnterPlayerIntoMatchmaking_GasForEntryIntoMiddleOfRankingsAfterTenThousandPlayers() public {
+        // Prepare to listen for the MatchMade event
+        address[] memory expectedPlayers = new address[](3);
+        expectedPlayers[0] = address(0x0000000000000000000000000000000000001386);
+        expectedPlayers[1] = address(0x0000000000000000000000000000000000001387);
+        expectedPlayers[2] = address(0x10003);
+
+        vm.expectEmit(true, true, true, true);
+        // We emit the event we expect to see.
+        emit MatchmakingQueue.MatchMade(queueAddress10000Players, expectedPlayers);
+
+        MatchmakingQueue.Player memory player10003 = MatchmakingQueue.Player(address(0x10003), 10000);
         matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress10000Players, player10003, 3, 5);
 
         // Check that the queue is now 10000 after the match is made

@@ -45,6 +45,7 @@ contract MatchmakingQueue {
             _queueAddress, queueMap[_queueAddress][index].playerAddress, queueMap[_queueAddress][index].ranking
         );
 
+        // VERY EXPENSIVE OPERATION
         // Shift remaining elements left to fill the gap
         for (uint256 i = index; i < queueMap[_queueAddress].length - 1; i++) {
             queueMap[_queueAddress][i] = queueMap[_queueAddress][i + 1];
