@@ -30,6 +30,11 @@ library RBTree {
 
     address public constant EMPTY = address(0);
 
+    /**
+     * @notice Get the smallest value node in the tree
+     * @param self The tree
+     * @return _key The smallest value node
+     */
     function first(Tree storage self) internal view returns (address _key) {
         _key = self.root;
         if (_key != EMPTY) {
@@ -48,8 +53,14 @@ library RBTree {
         }
     }
 
+    /**
+     * @notice Get the next node in the tree by value (ex. min in right subtree)
+     * @param self The tree
+     * @param target The target node
+     * @return cursor The next node
+     */
     function next(Tree storage self, address target) internal view returns (address cursor) {
-        require(target != EMPTY);
+        require(target != EMPTY, "Target cannot be empty");
         if (self.nodes[target].right != EMPTY) {
             cursor = treeMinimum(self, self.nodes[target].right);
         } else {
@@ -62,7 +73,7 @@ library RBTree {
     }
 
     function prev(Tree storage self, address target) internal view returns (address cursor) {
-        require(target != EMPTY);
+        require(target != EMPTY, "Target cannot be empty");
         if (self.nodes[target].left != EMPTY) {
             cursor = treeMaximum(self, self.nodes[target].left);
         } else {
@@ -91,7 +102,7 @@ library RBTree {
         view
         returns (address _returnKey, uint256 _value, address _parent, address _left, address _right, bool _red)
     {
-        require(exists(self, key));
+        require(exists(self, key), "Node does not exist");
         return (
             key,
             self.nodes[key].value,
@@ -103,8 +114,8 @@ library RBTree {
     }
 
     function insert(Tree storage self, address key, uint256 value) internal {
-        require(key != EMPTY);
-        require(!exists(self, key));
+        require(key != EMPTY, "Key cannot be empty");
+        require(!exists(self, key), "Key already exists");
         address cursor = EMPTY;
         address probe = self.root;
         while (probe != EMPTY) {
@@ -127,8 +138,8 @@ library RBTree {
     }
 
     function remove(Tree storage self, address key) internal {
-        require(key != EMPTY);
-        require(exists(self, key));
+        require(key != EMPTY, "Key cannot be empty");
+        require(exists(self, key), "Key does not exist");
         address probe;
         address cursor;
         if (self.nodes[key].left == EMPTY || self.nodes[key].right == EMPTY) {
@@ -337,5 +348,155 @@ library RBTree {
             }
         }
         self.nodes[key].red = false;
+    }
+
+    /**
+     * @notice Find the node with the value closest to or equal to minValue, going to the leftmost node.
+     * @param self The tree
+     * @param minValue The target minimum value
+     * @return closest The address of the node with the closest value
+     */
+    function findLowestNodeToValue(Tree storage self, uint256 minValue) internal view returns (address closest) {
+        address current = self.root;
+        closest = EMPTY; // Initialize as EMPTY
+
+        while (current != EMPTY) {
+            if (self.nodes[current].value >= minValue) {
+                // If current node's value is greater than or equal to minValue,
+                // it might be a candidate for the closest match.
+                closest = current;
+                current = self.nodes[current].left; // Move to the left subtree to find a smaller value
+            } else {
+                // If the current node's value is less than minValue, move right.
+                current = self.nodes[current].right;
+            }
+        }
+    }
+
+    /**
+     * @notice Find the first n nodes in the tree that are within the given range
+     * @param self The tree
+     * @param n The number of nodes to find
+     * @param minValue The minimum value
+     * @param maxValue The maximum value
+     * @return nodes The nodes in the range
+     */
+    function findNodesInRange(Tree storage self, uint256 n, uint256 minValue, uint256 maxValue)
+        public
+        view
+        returns (address[] memory)
+    {
+        // todo: find "lowest" value by minValue first then call next() and iterate?
+        address[] memory nodes = new address[](n);
+        uint256 count = 0;
+        address cursor = findLowestNodeToValue(self, minValue);
+        while (cursor != EMPTY && count < n) {
+            if (self.nodes[cursor].value >= minValue && self.nodes[cursor].value <= maxValue) {
+                nodes[count] = cursor;
+                count++;
+            }
+            if (self.nodes[cursor].value < minValue) {
+                cursor = self.nodes[cursor].right;
+            } else if (self.nodes[cursor].value > maxValue) {
+                cursor = self.nodes[cursor].left;
+            } else {
+                cursor = next(self, cursor);
+                // if the next value is greater than maxValue, break because the current cursor
+                // is already within the range. So it is the last in the range, if the next() is out of range.
+                if (self.nodes[cursor].value > maxValue) {
+                    break;
+                }
+            }
+        }
+        address[] memory result = new address[](count);
+        for (uint256 i = 0; i < count; i++) {
+            result[i] = nodes[i];
+        }
+        return result;
+
+        // iterative approach chat
+        // require(minValue <= maxValue, "Invalid range");
+        // address[] memory result = new address[](n); // Initialize result array
+        // uint256 count = 0;
+
+        // address[] memory stack = new address[](n); // Stack for iterative traversal
+        // uint256 stackPointer = 0; // Points to the top of the stack
+        // address current = self.root;
+
+        // // Iterative in-order traversal with range checks
+        // while (stackPointer > 0 || current != EMPTY) {
+        //     // Traverse left while skipping nodes that are too large
+        //     while (current != EMPTY) {
+        //         if (self.nodes[current].value >= minValue) {
+        //             // Push nodes only if they can potentially be in the range
+        //             stack[stackPointer] = current;
+        //             stackPointer++;
+        //             current = self.nodes[current].left;
+        //         } else {
+        //             // Skip left subtree if current node value is smaller than minValue
+        //             current = self.nodes[current].right;
+        //         }
+        //     }
+
+        //     // Pop from the stack
+        //     stackPointer--;
+        //     current = stack[stackPointer];
+
+        //     Node storage currentNode = self.nodes[current];
+
+        //     // If current node is in range, add it to the result
+        //     if (currentNode.value >= minValue && currentNode.value <= maxValue) {
+        //         result[count] = currentNode.key;
+        //         count++;
+
+        //         // Stop if we found enough nodes
+        //         if (count == n) {
+        //             return result;
+        //         }
+        //     }
+
+        //     // Skip the right subtree if current node value is larger than maxValue
+        //     if (currentNode.value <= maxValue) {
+        //         current = currentNode.right;
+        //     } else {
+        //         current = EMPTY;
+        //     }
+        // }
+
+        // return result; // If fewer than n nodes are found, return as many as we found
+
+        // recursive approach
+        // require(minValue <= maxValue, "Invalid range");
+        // address[] memory result = new address[](n); // Initialize array for the result
+        // uint256 count = 0; // Keep track of found nodes
+
+        // // Helper function to perform in-order traversal and collect nodes in range
+        // function _findInRange(address node) internal view {
+        //     if (node == EMPTY || count >= n) {
+        //         return; // Stop if node is empty or enough nodes found
+        //     }
+
+        //     Node storage currentNode = self.nodes[node];
+
+        //     // Traverse the left subtree
+        //     if (currentNode.left != EMPTY) {
+        //         _findInRange(currentNode.left);
+        //     }
+
+        //     // Check if the current node is within the range
+        //     if (currentNode.value >= minValue && currentNode.value <= maxValue && count < n) {
+        //         result[count] = currentNode.key;
+        //         count++;
+        //     }
+
+        //     // Traverse the right subtree
+        //     if (currentNode.right != EMPTY && count < n) {
+        //         _findInRange(currentNode.right);
+        //     }
+        // }
+
+        // // Start from the root node and search
+        // _findInRange(self.root);
+        // return result;
     }
 }
