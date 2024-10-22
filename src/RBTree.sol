@@ -13,22 +13,24 @@ pragma solidity ^0.8.24;
 //
 // Enjoy. (c) BokkyPooBah / Bok Consulting Pty Ltd 2020. The MIT Licence.
 // ----------------------------------------------------------------------------
-library BokkyPooBahsRedBlackTreeLibrary {
+library RBTree {
     struct Node {
-        uint256 parent;
-        uint256 left;
-        uint256 right;
+        address key;
+        uint256 value;
+        address parent;
+        address left;
+        address right;
         bool red;
     }
 
     struct Tree {
-        uint256 root;
-        mapping(uint256 => Node) nodes;
+        address root;
+        mapping(address => Node) nodes;
     }
 
-    uint256 private constant EMPTY = 0;
+    address public constant EMPTY = address(0);
 
-    function first(Tree storage self) internal view returns (uint256 _key) {
+    function first(Tree storage self) internal view returns (address _key) {
         _key = self.root;
         if (_key != EMPTY) {
             while (self.nodes[_key].left != EMPTY) {
@@ -37,7 +39,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         }
     }
 
-    function last(Tree storage self) internal view returns (uint256 _key) {
+    function last(Tree storage self) internal view returns (address _key) {
         _key = self.root;
         if (_key != EMPTY) {
             while (self.nodes[_key].right != EMPTY) {
@@ -46,7 +48,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         }
     }
 
-    function next(Tree storage self, uint256 target) internal view returns (uint256 cursor) {
+    function next(Tree storage self, address target) internal view returns (address cursor) {
         require(target != EMPTY);
         if (self.nodes[target].right != EMPTY) {
             cursor = treeMinimum(self, self.nodes[target].right);
@@ -59,7 +61,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         }
     }
 
-    function prev(Tree storage self, uint256 target) internal view returns (uint256 cursor) {
+    function prev(Tree storage self, address target) internal view returns (address cursor) {
         require(target != EMPTY);
         if (self.nodes[target].left != EMPTY) {
             cursor = treeMaximum(self, self.nodes[target].left);
@@ -72,44 +74,51 @@ library BokkyPooBahsRedBlackTreeLibrary {
         }
     }
 
-    function exists(Tree storage self, uint256 key) internal view returns (bool) {
+    function exists(Tree storage self, address key) internal view returns (bool) {
         return (key != EMPTY) && ((key == self.root) || (self.nodes[key].parent != EMPTY));
     }
 
-    function isEmpty(uint256 key) internal pure returns (bool) {
+    function isEmpty(address key) internal pure returns (bool) {
         return key == EMPTY;
     }
 
-    function getEmpty() internal pure returns (uint256) {
+    function getEmpty() internal pure returns (address) {
         return EMPTY;
     }
 
-    function getNode(Tree storage self, uint256 key)
+    function getNode(Tree storage self, address key)
         internal
         view
-        returns (uint256 _returnKey, uint256 _parent, uint256 _left, uint256 _right, bool _red)
+        returns (address _returnKey, uint256 _value, address _parent, address _left, address _right, bool _red)
     {
         require(exists(self, key));
-        return (key, self.nodes[key].parent, self.nodes[key].left, self.nodes[key].right, self.nodes[key].red);
+        return (
+            key,
+            self.nodes[key].value,
+            self.nodes[key].parent,
+            self.nodes[key].left,
+            self.nodes[key].right,
+            self.nodes[key].red
+        );
     }
 
-    function insert(Tree storage self, uint256 key) internal {
+    function insert(Tree storage self, address key, uint256 value) internal {
         require(key != EMPTY);
         require(!exists(self, key));
-        uint256 cursor = EMPTY;
-        uint256 probe = self.root;
+        address cursor = EMPTY;
+        address probe = self.root;
         while (probe != EMPTY) {
             cursor = probe;
-            if (key < probe) {
+            if (value < self.nodes[probe].value) {
                 probe = self.nodes[probe].left;
             } else {
                 probe = self.nodes[probe].right;
             }
         }
-        self.nodes[key] = Node({parent: cursor, left: EMPTY, right: EMPTY, red: true});
+        self.nodes[key] = Node({key: key, value: value, parent: cursor, left: EMPTY, right: EMPTY, red: true});
         if (cursor == EMPTY) {
             self.root = key;
-        } else if (key < cursor) {
+        } else if (value < self.nodes[cursor].value) {
             self.nodes[cursor].left = key;
         } else {
             self.nodes[cursor].right = key;
@@ -117,11 +126,11 @@ library BokkyPooBahsRedBlackTreeLibrary {
         insertFixup(self, key);
     }
 
-    function remove(Tree storage self, uint256 key) internal {
+    function remove(Tree storage self, address key) internal {
         require(key != EMPTY);
         require(exists(self, key));
-        uint256 probe;
-        uint256 cursor;
+        address probe;
+        address cursor;
         if (self.nodes[key].left == EMPTY || self.nodes[key].right == EMPTY) {
             cursor = key;
         } else {
@@ -135,7 +144,7 @@ library BokkyPooBahsRedBlackTreeLibrary {
         } else {
             probe = self.nodes[cursor].right;
         }
-        uint256 yParent = self.nodes[cursor].parent;
+        address yParent = self.nodes[cursor].parent;
         self.nodes[probe].parent = yParent;
         if (yParent != EMPTY) {
             if (cursor == self.nodes[yParent].left) {
@@ -162,24 +171,24 @@ library BokkyPooBahsRedBlackTreeLibrary {
         delete self.nodes[cursor];
     }
 
-    function treeMinimum(Tree storage self, uint256 key) private view returns (uint256) {
+    function treeMinimum(Tree storage self, address key) private view returns (address) {
         while (self.nodes[key].left != EMPTY) {
             key = self.nodes[key].left;
         }
         return key;
     }
 
-    function treeMaximum(Tree storage self, uint256 key) private view returns (uint256) {
+    function treeMaximum(Tree storage self, address key) private view returns (address) {
         while (self.nodes[key].right != EMPTY) {
             key = self.nodes[key].right;
         }
         return key;
     }
 
-    function rotateLeft(Tree storage self, uint256 key) private {
-        uint256 cursor = self.nodes[key].right;
-        uint256 keyParent = self.nodes[key].parent;
-        uint256 cursorLeft = self.nodes[cursor].left;
+    function rotateLeft(Tree storage self, address key) private {
+        address cursor = self.nodes[key].right;
+        address keyParent = self.nodes[key].parent;
+        address cursorLeft = self.nodes[cursor].left;
         self.nodes[key].right = cursorLeft;
         if (cursorLeft != EMPTY) {
             self.nodes[cursorLeft].parent = key;
@@ -196,10 +205,10 @@ library BokkyPooBahsRedBlackTreeLibrary {
         self.nodes[key].parent = cursor;
     }
 
-    function rotateRight(Tree storage self, uint256 key) private {
-        uint256 cursor = self.nodes[key].left;
-        uint256 keyParent = self.nodes[key].parent;
-        uint256 cursorRight = self.nodes[cursor].right;
+    function rotateRight(Tree storage self, address key) private {
+        address cursor = self.nodes[key].left;
+        address keyParent = self.nodes[key].parent;
+        address cursorRight = self.nodes[cursor].right;
         self.nodes[key].left = cursorRight;
         if (cursorRight != EMPTY) {
             self.nodes[cursorRight].parent = key;
@@ -216,10 +225,10 @@ library BokkyPooBahsRedBlackTreeLibrary {
         self.nodes[key].parent = cursor;
     }
 
-    function insertFixup(Tree storage self, uint256 key) private {
-        uint256 cursor;
+    function insertFixup(Tree storage self, address key) private {
+        address cursor;
         while (key != self.root && self.nodes[self.nodes[key].parent].red) {
-            uint256 keyParent = self.nodes[key].parent;
+            address keyParent = self.nodes[key].parent;
             if (keyParent == self.nodes[self.nodes[keyParent].parent].left) {
                 cursor = self.nodes[self.nodes[keyParent].parent].right;
                 if (self.nodes[cursor].red) {
@@ -259,8 +268,8 @@ library BokkyPooBahsRedBlackTreeLibrary {
         self.nodes[self.root].red = false;
     }
 
-    function replaceParent(Tree storage self, uint256 a, uint256 b) private {
-        uint256 bParent = self.nodes[b].parent;
+    function replaceParent(Tree storage self, address a, address b) private {
+        address bParent = self.nodes[b].parent;
         self.nodes[a].parent = bParent;
         if (bParent == EMPTY) {
             self.root = a;
@@ -273,10 +282,10 @@ library BokkyPooBahsRedBlackTreeLibrary {
         }
     }
 
-    function removeFixup(Tree storage self, uint256 key) private {
-        uint256 cursor;
+    function removeFixup(Tree storage self, address key) private {
+        address cursor;
         while (key != self.root && !self.nodes[key].red) {
-            uint256 keyParent = self.nodes[key].parent;
+            address keyParent = self.nodes[key].parent;
             if (key == self.nodes[keyParent].left) {
                 cursor = self.nodes[keyParent].right;
                 if (self.nodes[cursor].red) {
