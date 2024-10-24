@@ -2,9 +2,9 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "forge-std/Test.sol";
-import {MatchmakingQueue} from "../src/MatchmakingQueue.sol";
+import {MatchmakingQueue} from "../../src/MatchmakingQueue.sol";
 
-contract MatchmakingQueueTest is Test {
+contract MatchmakingQueueRBTreeTest is Test {
     MatchmakingQueue matchmakingQueue;
     address queueAddress = address(0x123); // Assuming this is the queue address for the matchmaking queue
 
@@ -103,6 +103,89 @@ contract MatchmakingQueueTest is Test {
         matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress, player3, 3, 3);
 
         // Verify that all three players are still in the queue since no match was made
+        assertEq(matchmakingQueue.getQueueLength(queueAddress), 3);
+    }
+
+    function testEnterPlayersWithZeroRankingIntoMatchmaking_MatchMade() public {
+        // Prepare to listen for the MatchMade event
+        address[] memory expectedPlayers = new address[](3);
+        expectedPlayers[0] = address(0x1);
+        expectedPlayers[1] = address(0x2);
+        expectedPlayers[2] = address(0x3);
+
+        // Enter 3 players into matchmaking
+        MatchmakingQueue.Player memory player1 = MatchmakingQueue.Player(address(0x1), 0);
+        MatchmakingQueue.Player memory player2 = MatchmakingQueue.Player(address(0x2), 0);
+        MatchmakingQueue.Player memory player3 = MatchmakingQueue.Player(address(0x3), 0);
+
+        // args: player, number of players to match, ranking range
+        matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress, player1, 3, 1);
+        matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress, player2, 3, 1);
+
+        // Check that the queue is now empty after the match
+        assertEq(matchmakingQueue.getQueueLength(queueAddress), 2);
+
+        vm.expectEmit(true, true, true, true);
+        // We emit the event we expect to see.
+        emit MatchmakingQueue.MatchMade(queueAddress, expectedPlayers);
+
+        matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress, player3, 3, 1);
+
+        // Check that the queue is now empty after the match
+        assertEq(matchmakingQueue.getQueueLength(queueAddress), 0);
+    }
+
+    function testEnterPlayersWithZeroRankingIntoMatchmakingOfZeroRange_MatchMade() public {
+        // Prepare to listen for the MatchMade event
+        address[] memory expectedPlayers = new address[](3);
+        expectedPlayers[0] = address(0x1);
+        expectedPlayers[1] = address(0x2);
+        expectedPlayers[2] = address(0x3);
+
+        // Enter 3 players into matchmaking
+        MatchmakingQueue.Player memory player1 = MatchmakingQueue.Player(address(0x1), 0);
+        MatchmakingQueue.Player memory player2 = MatchmakingQueue.Player(address(0x2), 0);
+        MatchmakingQueue.Player memory player3 = MatchmakingQueue.Player(address(0x3), 0);
+
+        // args: player, number of players to match, ranking range
+        matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress, player1, 3, 0);
+        matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress, player2, 3, 0);
+
+        // Check that the queue is now empty after the match
+        assertEq(matchmakingQueue.getQueueLength(queueAddress), 2);
+
+        vm.expectEmit(true, true, true, true);
+        // We emit the event we expect to see.
+        emit MatchmakingQueue.MatchMade(queueAddress, expectedPlayers);
+
+        matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress, player3, 3, 0);
+
+        // Check that the queue is now empty after the match
+        assertEq(matchmakingQueue.getQueueLength(queueAddress), 0);
+    }
+
+    function testEnterPlayersIntoMatchmaking_NoMatchMade() public {
+        // Prepare to listen for the MatchMade event
+        address[] memory expectedPlayers = new address[](3);
+        expectedPlayers[0] = address(0x1);
+        expectedPlayers[1] = address(0x2);
+        expectedPlayers[2] = address(0x3);
+
+        // Enter 3 players into matchmaking
+        MatchmakingQueue.Player memory player1 = MatchmakingQueue.Player(address(0x1), 1);
+        MatchmakingQueue.Player memory player2 = MatchmakingQueue.Player(address(0x2), 3);
+        MatchmakingQueue.Player memory player3 = MatchmakingQueue.Player(address(0x3), 5);
+
+        // args: player, number of players to match, ranking range
+        matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress, player1, 2, 1);
+        matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress, player2, 2, 1);
+
+        // Check that the queue is now empty after the match
+        assertEq(matchmakingQueue.getQueueLength(queueAddress), 2);
+
+        matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress, player3, 2, 1);
+
+        // Check that the queue is now empty after the match
         assertEq(matchmakingQueue.getQueueLength(queueAddress), 3);
     }
 }

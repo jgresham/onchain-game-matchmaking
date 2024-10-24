@@ -2,9 +2,9 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "forge-std/Test.sol";
-import {MatchmakingQueue} from "../src/MatchmakingQueue.sol";
+import {MatchmakingQueue} from "../../src/MatchmakingQueue.sol";
 
-contract MatchmakingQueueGasScalingTest2 is Test {
+contract MatchmakingQueueGasScalingRBTreeTest2 is Test {
     MatchmakingQueue matchmakingQueue;
     address queueAddress100000Players = address(0x123456); // Added queue address for 100,000 players
 
@@ -13,7 +13,7 @@ contract MatchmakingQueueGasScalingTest2 is Test {
 
         // ------------------------------------------------------------------------------------------------
         // Enter 100,000 players into a matchmaking queue
-        for (uint256 k = 0; k < 100000; k++) {
+        for (uint256 k = 1; k < 100001; k++) {
             // huge match size to avoid match being made
             MatchmakingQueue.Player memory player = MatchmakingQueue.Player(address(uint160(k)), uint256(1));
             matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress100000Players, player, 200000, 2);
@@ -23,9 +23,9 @@ contract MatchmakingQueueGasScalingTest2 is Test {
         assertEq(matchmakingQueue.getQueueLength(queueAddress100000Players), 100000);
 
         // Enter the 100001st and 100002nd players into matchmaking
-        MatchmakingQueue.Player memory player100001 = MatchmakingQueue.Player(address(0x100001), 100);
+        MatchmakingQueue.Player memory player100001 = MatchmakingQueue.Player(address(0x100002), 100);
         matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress100000Players, player100001, 3, 5);
-        MatchmakingQueue.Player memory player100002 = MatchmakingQueue.Player(address(0x100002), 100);
+        MatchmakingQueue.Player memory player100002 = MatchmakingQueue.Player(address(0x100003), 100);
         matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress100000Players, player100002, 3, 5);
 
         // Check that the queue is now empty after the match

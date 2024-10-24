@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "forge-std/Test.sol";
-import {MatchmakingQueue} from "../src/MatchmakingQueue.sol";
+import {MatchmakingQueue} from "../../src/MatchmakingQueue.sol";
 
 contract MatchmakingQueueGasScalingTest is Test {
     MatchmakingQueue matchmakingQueue;
@@ -18,7 +18,7 @@ contract MatchmakingQueueGasScalingTest is Test {
         // Enter 1000 players into a matchmaking queue
         for (uint256 i = 0; i < 1000; i++) {
             // rankings spread out to avoid matching range
-            MatchmakingQueue.Player memory player = MatchmakingQueue.Player(address(uint160(i)), uint16(i * 2));
+            MatchmakingQueue.Player memory player = MatchmakingQueue.Player(address(uint160(i + 1)), uint16(i * 2));
             matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress1000Players, player, 3, 1);
         }
 
@@ -38,7 +38,7 @@ contract MatchmakingQueueGasScalingTest is Test {
         // Enter 10000 players into a matchmaking queue
         for (uint256 j = 0; j < 10000; j++) {
             // rankings spread out to avoid matching range
-            MatchmakingQueue.Player memory player = MatchmakingQueue.Player(address(uint160(j)), uint16(j * 2));
+            MatchmakingQueue.Player memory player = MatchmakingQueue.Player(address(uint160(j + 1)), uint16(j * 2));
             matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress10000Players, player, 3, 1);
         }
 
@@ -58,7 +58,7 @@ contract MatchmakingQueueGasScalingTest is Test {
         // Enter 100000 players into a matchmaking queue
         for (uint256 k = 0; k < 10000; k++) {
             // huge match size to avoid match being made
-            MatchmakingQueue.Player memory player = MatchmakingQueue.Player(address(uint160(k)), uint16(1));
+            MatchmakingQueue.Player memory player = MatchmakingQueue.Player(address(uint160(k + 1)), uint16(1));
             matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress100000Players, player, 200000, 1);
         }
 
@@ -81,7 +81,7 @@ contract MatchmakingQueueGasScalingTest is Test {
         // Enter 1000 players into matchmaking
         for (uint256 i = 0; i < 1000; i++) {
             // rankings spread out to avoid matching range
-            MatchmakingQueue.Player memory player = MatchmakingQueue.Player(address(uint160(i)), uint16(i * 2));
+            MatchmakingQueue.Player memory player = MatchmakingQueue.Player(address(uint160(i + 1)), uint16(i * 2));
             matchmakingQueue.enterPlayerIntoMatchmaking(queueAddress, player, 3, 1);
         }
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "forge-std/Test.sol";
-import {MatchmakingQueue} from "../../src/MatchmakingQueueRBTree.sol";
+import {MatchmakingQueue} from "../../src/MatchmakingQueue.sol";
 
 contract MatchmakingQueueGasScaling1000PlayersTest is Test {
     MatchmakingQueue matchmakingQueue;
