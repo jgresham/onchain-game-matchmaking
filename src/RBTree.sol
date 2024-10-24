@@ -26,6 +26,7 @@ library RBTree {
     struct Tree {
         address root;
         mapping(address => Node) nodes;
+        uint256 totalNodes;
     }
 
     address public constant EMPTY = address(0);
@@ -89,6 +90,10 @@ library RBTree {
         return (key != EMPTY) && ((key == self.root) || (self.nodes[key].parent != EMPTY));
     }
 
+    function size(Tree storage self) public view returns (uint256) {
+        return self.totalNodes;
+    }
+
     function isEmpty(address key) internal pure returns (bool) {
         return key == EMPTY;
     }
@@ -135,6 +140,7 @@ library RBTree {
             self.nodes[cursor].right = key;
         }
         insertFixup(self, key);
+        self.totalNodes++;
     }
 
     function remove(Tree storage self, address key) internal {
@@ -180,6 +186,7 @@ library RBTree {
             removeFixup(self, probe);
         }
         delete self.nodes[cursor];
+        self.totalNodes--;
     }
 
     function treeMinimum(Tree storage self, address key) private view returns (address) {
@@ -445,7 +452,7 @@ library RBTree {
         //     Node storage currentNode = self.nodes[current];
 
         //     // If current node is in range, add it to the result
-        //     if (currentNode.value >= minValue && currentNode.value <= maxValue) {
+        //     if (currentNode.value >= minValue && currentNode.value <= maxValue && count < n) {
         //         result[count] = currentNode.key;
         //         count++;
 
